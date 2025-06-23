@@ -1,0 +1,1676 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mago Gótico - O Jogo</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #0d0d0d;
+            font-family: 'MedievalSharp', cursive;
+            user-select: none;
+        }
+        canvas {
+            display: block;
+            background-color: #1a1a1a;
+        }
+        #ui {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: #d4af37; /* Dourado medieval */
+            font-size: 16px;
+            text-shadow: 2px 2px 3px rgba(0, 0, 0, 0.7);
+            z-index: 5;
+        }
+        #healthBarContainer {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 5px;
+            border-radius: 5px;
+            border: 2px solid #5a3921; /* Madeira envelhecida */
+        }
+        #healthBar, #expBar {
+            height: 20px;
+            border: 1px solid #444;
+            box-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+            transition: width 0.1s ease-out, background-color 0.2s ease;
+            position: relative;
+        }
+        #healthBar {
+            width: 200px;
+            background: linear-gradient(to right, #8B0000, #ff3333);
+            border-radius: 3px;
+        }
+        #expBar {
+            width: 200px;
+            background: linear-gradient(to right, #1e3c72, #2a5298);
+            border-radius: 3px;
+            margin-top: 5px;
+        }
+        .bar-decoration {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 10 10"><rect width="10" height="10" fill="none" stroke="rgba(0,0,0,0.2)" stroke-width="1"/></svg>');
+            opacity: 0.3;
+        }
+        #healthText {
+            margin-left: 10px;
+            font-size: 14px;
+            color: #f5f5dc; /* Bege medieval */
+            text-shadow: 1px 1px 2px #000;
+        }
+        #levelUpScreen, #gameOverScreen, #waveCompleteScreen, #startScreen, #rankingScreen {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"><rect width="400" height="300" rx="10" ry="10" fill="%23202020" stroke="%23d4af37" stroke-width="3"/><rect x="5" y="5" width="390" height="290" rx="5" ry="5" fill="%23101010" stroke="%238B4513" stroke-width="1"/></svg>');
+            background-size: cover;
+            padding: 30px;
+            border-radius: 10px;
+            color: #d4af37;
+            text-align: center;
+            display: none;
+            box-shadow: 0 0 30px rgba(139, 0, 0, 0.7);
+            border: 3px solid #8B4513; /* Bordas de madeira */
+            z-index: 10;
+            min-width: 300px;
+            max-width: 80%;
+        }
+        .upgradeOption {
+            margin: 15px;
+            padding: 15px;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="80" viewBox="0 0 100 80"><rect width="100" height="80" rx="5" ry="5" fill="%23333333" stroke="%23d4af37" stroke-width="1"/></svg>');
+            background-size: cover;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid #8B4513;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            color: #f5f5dc;
+        }
+        .upgradeOption:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.5);
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="80" viewBox="0 0 100 80"><rect width="100" height="80" rx="5" ry="5" fill="%23444444" stroke="%23d4af37" stroke-width="1"/></svg>');
+            background-size: cover;
+        }
+        .upgradeOption h3 {
+            color: #d4af37;
+            font-size: 18px;
+            margin-bottom: 8px;
+            text-shadow: 1px 1px 2px #000;
+        }
+        .upgradeOption p {
+            font-size: 14px;
+            margin: 0;
+        }
+        button {
+            margin-top: 30px;
+            padding: 12px 25px;
+            background: linear-gradient(to bottom, #8B0000, #5a0000);
+            border: none;
+            border-radius: 5px;
+            color: #f5f5dc;
+            cursor: pointer;
+            font-size: 18px;
+            font-family: 'MedievalSharp', cursive;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            text-shadow: 1px 1px 2px #000;
+            border: 2px solid #5a0000;
+            position: relative;
+            overflow: hidden;
+        }
+        button:hover {
+            background: linear-gradient(to bottom, #A00000, #700000);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.4);
+        }
+        button:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        #rankingButton {
+            background: linear-gradient(to bottom, #483D8B, #2a235f);
+            border: 2px solid #2a235f;
+        }
+        #rankingButton:hover {
+            background: linear-gradient(to bottom, #554A99, #3a3270);
+        }
+        #backToStartButton {
+            background: linear-gradient(to bottom, #444, #2a2a2a);
+            border: 2px solid #333;
+        }
+        #backToStartButton:hover {
+            background: linear-gradient(to bottom, #555, #3a3a3a);
+        }
+        #rankingList {
+            list-style-type: none;
+            padding: 0;
+            margin-top: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+            background: rgba(30, 30, 30, 0.7);
+            border-radius: 5px;
+            padding: 10px;
+            border: 1px solid #8B4513;
+        }
+        #rankingList li {
+            padding: 8px 0;
+            border-bottom: 1px dashed #8B4513;
+            color: #f5f5dc;
+        }
+        #rankingList li:last-child {
+            border-bottom: none;
+        }
+        #rankingList li:nth-child(1) {
+            color: #ffd700;
+            font-weight: bold;
+        }
+        #rankingList li:nth-child(2) {
+            color: #c0c0c0;
+        }
+        #rankingList li:nth-child(3) {
+            color: #cd7f32;
+        }
+        .screen-title {
+            font-size: 32px;
+            color: #d4af37;
+            text-shadow: 2px 2px 4px #000;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        .screen-title::after {
+            content: "";
+            display: block;
+            width: 80%;
+            height: 2px;
+            background: linear-gradient(to right, transparent, #d4af37, transparent);
+            margin: 10px auto;
+        }
+        .screen-text {
+            font-size: 18px;
+            color: #f5f5dc;
+            margin-bottom: 25px;
+            text-shadow: 1px 1px 2px #000;
+        }
+        /* Importa fontes de estilo medieval */
+        @import url('https://fonts.googleapis.com/css2?family=MedievalSharp&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&display=swap');
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <div id="ui">
+        <div>Onda: <span id="waveDisplay">0</span></div>
+        <div>Nível: <span id="levelDisplay">1</span></div>
+        <div id="healthBarContainer">
+            <div id="healthBar">
+                <div class="bar-decoration"></div>
+            </div>
+            <span id="healthText">100/100</span>
+        </div>
+        <div id="expBar">
+            <div class="bar-decoration"></div>
+        </div>
+    </div>
+
+    <div id="startScreen">
+        <h2 class="screen-title">MAGO GÓTICO</h2>
+        <p class="screen-text">Derrote as criaturas das trevas e fortaleça seus poderes!</p>
+        <button id="startButton">INICIAR JORNADA</button><br>
+        <button id="rankingButton">HALL DA FAMA</button>
+    </div>
+
+    <div id="levelUpScreen">
+        <h2 class="screen-title">SABEDORIA ADQUIRIDA</h2>
+        <p class="screen-text">Escolha um aprimoramento arcano:</p>
+        <div id="upgradeOptions"></div>
+    </div>
+
+    <div id="waveCompleteScreen">
+        <h2 class="screen-title">ONDA CONCLUÍDA</h2>
+        <p class="screen-text">Prepare-se para o próximo desafio!</p>
+        <button id="nextWaveButton">PRÓXIMA ONDA</button>
+    </div>
+
+    <div id="gameOverScreen">
+        <h2 class="screen-title">FIM DA JORNADA</h2>
+        <p class="screen-text">Você alcançou a Onda <span id="finalWave">1</span> e o Nível <span id="finalLevel">1</span></p>
+        <button id="restartButton">RENASCER DAS CINZAS</button>
+    </div>
+
+    <div id="rankingScreen">
+        <h2 class="screen-title">HALL DA FAMA</h2>
+        <ul id="rankingList"></ul>
+        <button id="backToStartButton">VOLTAR</button>
+    </div>
+
+    <script>
+        // Configuração do canvas do jogo
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = 800;
+        canvas.height = 600;
+
+        // Elementos da UI
+        const uiElements = {
+            levelDisplay: document.getElementById('levelDisplay'),
+            waveDisplay: document.getElementById('waveDisplay'),
+            healthBar: document.getElementById('healthBar'),
+            healthText: document.getElementById('healthText'),
+            expBar: document.getElementById('expBar'),
+            levelUpScreen: document.getElementById('levelUpScreen'),
+            upgradeOptions: document.getElementById('upgradeOptions'),
+            gameOverScreen: document.getElementById('gameOverScreen'),
+            finalLevel: document.getElementById('finalLevel'),
+            finalWave: document.getElementById('finalWave'),
+            restartButton: document.getElementById('restartButton'),
+            waveCompleteScreen: document.getElementById('waveCompleteScreen'),
+            nextWaveButton: document.getElementById('nextWaveButton'),
+            startScreen: document.getElementById('startScreen'),
+            startButton: document.getElementById('startButton'),
+            rankingScreen: document.getElementById('rankingScreen'),
+            rankingButton: document.getElementById('rankingButton'),
+            rankingList: document.getElementById('rankingList'),
+            backToStartButton: document.getElementById('backToStartButton')
+        };
+
+        // Estado do jogo
+        let gamePhase = 'start';
+        let score = 0;
+        let level = 1;
+        let exp = 0;
+        let expToNextLevel = 100;
+        let enemies = [];
+        let enemyProjectiles = [];
+        let playerProjectiles = [];
+        let platforms = [];
+        let lastShotTime = 0;
+        let shotCooldown = 300;
+        let isMouseDown = false;
+        let lastEnemyShotTime = 0;
+        let enemyShotCooldown = 1000;
+        let invincibleUntil = 0;
+        let invincibleDuration = 500;
+        let upgradeOptionsPool = [];
+        let orbs = [];
+        let wisps = [];
+        let thunderboltCooldown = 0;
+        let barrierActive = false;
+        let barrierCooldown = 0;
+        let lastMovementTime = 0;
+        let stationaryTime = 0;
+        let reviveCount = 0;
+        let currentWave = 0;
+        let totalEnemiesInWave = 0;
+        let isBossWave = false;
+        let bossUpgradesNext = false;
+
+        // Atributos do jogador
+        const player = {
+            x: 100,
+            y: 400,
+            width: 30,
+            height: 50,
+            speed: 5,
+            jumpForce: 12,
+            velocityY: 0,
+            isJumping: false,
+            maxHealth: 100,
+            health: 100,
+            direction: 1,
+            projectileDamage: 10,
+            criticalChance: 0,
+            attackSpeed: 1,
+            defense: 0,
+            movementSpeed: 1,
+            jumpHeight: 1,
+            lifeSteal: 0,
+            projectileSize: 1,
+            projectileHits: 1,
+            size: 1,
+            thunderboltCount: 0,
+            itemEffectiveness: 1,
+            reviveCount: 0,
+            gushJumps: 1,
+            currentJumps: 1,
+            frictionRunDistance: 0,
+            overheatDamage: 0
+        };
+
+        // Opções de melhoria (Upgrades) - Traduzidas
+        const upgrades = [
+            { name: "Catalisador", description: "Dano de Projétil +2", rarity: "common", apply: () => { player.projectileDamage += 2; } },
+            { name: "Visão Apurada", description: "Chance Crítica +5%", rarity: "common", apply: () => { player.criticalChance += 5; } },
+            { name: "Crescimento", description: "HP Máx. +10", rarity: "common", apply: () => { player.maxHealth += 10; player.health += 10; } },
+            { name: "Impulso", description: "Altura do Salto +30%", rarity: "common", apply: () => { player.jumpHeight *= 1.3; } },
+            { name: "Renovação", description: "Cura para o HP Máx.", rarity: "common", apply: () => { player.health = player.maxHealth; } },
+            { name: "Resistência", description: "Defesa +4%", rarity: "common", apply: () => { player.defense += 4; } },
+            { name: "Ressonância", description: "Velocidade de Ataque +12%", rarity: "common", apply: () => { player.attackSpeed *= 1.12; } },
+            { name: "Almas", description: "Chance de derrubar orbe de alma 1%", rarity: "common", hasEffect: true, apply: () => { playerEffects.add("Almas"); } },
+            { name: "Estabilidade", description: "Projétil suporta +1 hit antes de explodir", rarity: "common", apply: () => { player.projectileHits += 1; } },
+            { name: "Agilidade", description: "Velocidade de Movimento +20%", rarity: "common", apply: () => { player.movementSpeed *= 1.2; } },
+
+            { name: "Catalisador+", description: "Dano de Projétil +4", rarity: "uncommon", apply: () => { player.projectileDamage += 4; } },
+            { name: "Carga", description: "Tamanho do Projétil +20%", rarity: "uncommon", apply: () => { player.projectileSize *= 1.2; } },
+            { name: "Manto", description: "Invulnerabilidade após dano +10% duração", rarity: "uncommon", apply: () => { invincibleDuration *= 1.1; } },
+            { name: "Fragmentação", description: "Ao morrer, inimigos liberam 2 projéteis mais fracos em direções aleatórias", rarity: "uncommon", hasEffect: true, apply: () => { playerEffects.add("Fragmentação"); } },
+            { name: "Fricção", description: "A cada metro corrido, 1 projétil explosivo é lançado para cima", rarity: "uncommon", hasEffect: true, apply: () => { playerEffects.add("Fricção"); } },
+            { name: "Crescimento+", description: "HP Máx. +20", rarity: "uncommon", apply: () => { player.maxHealth += 20; player.health += 20; } },
+            { name: "Jato", description: "Adiciona +1 Salto", rarity: "uncommon", apply: () => { player.gushJumps += 1; player.currentJumps = player.gushJumps; } },
+            { name: "Sanguessuga", description: "Roubo de Vida de 3% do Dano", rarity: "uncommon", apply: () => { player.lifeSteal += 3; } },
+            { name: "Sorte", description: "Maior chance de rolar itens incomuns", rarity: "uncommon", hasEffect: true, apply: () => { playerEffects.add("Sorte"); } },
+            { name: "Orbe", description: "Inimigos mortos têm 5% de chance de derrubar um orbe de cura", rarity: "uncommon", hasEffect: true, apply: () => { playerEffects.add("Orbe"); } },
+            { name: "Precisão", description: "Crítico causa +50% de dano", rarity: "uncommon", hasEffect: true, apply: () => { playerEffects.add("Precisão"); } },
+            { name: "Fúria", description: "Se abaixo de 50% HP, aumenta o dano de projétil e corpo de acordo (até 50%)", rarity: "uncommon", hasEffect: true, apply: () => { playerEffects.add("Fúria"); } },
+            { name: "Rebrota", description: "Regenera HP% com base no número de inimigos vivos", rarity: "uncommon", hasEffect: true, apply: () => { playerEffects.add("Rebrota"); } },
+            { name: "Ressonância+", description: "Velocidade de Ataque +24%", rarity: "uncommon", apply: () => { player.attackSpeed *= 1.24; } },
+            { name: "Encolher", description: "Torna você 10% menor", rarity: "uncommon", apply: () => { player.size *= 0.9; player.width *= 0.9; player.height *= 0.9; } },
+            { name: "Agilidade+", description: "Velocidade de Movimento +40%", rarity: "uncommon", apply: () => { player.movementSpeed *= 1.4; } },
+            { name: "Raio", description: "Invoca 2 raios dos céus a cada poucos segundos", rarity: "uncommon", apply: () => { player.thunderboltCount += 2; playerEffects.add("Raio"); } },
+
+            { name: "Avaliação", description: "+1 escolha de item a partir de agora", rarity: "rare", hasEffect: true, apply: () => { playerEffects.add("Avaliação"); } },
+            { name: "Barreira", description: "Cria um escudo que bloqueia dano uma vez a cada poucos segundos", rarity: "rare", hasEffect: true, apply: () => { playerEffects.add("Barreira"); barrierCooldown = 0; } },
+            { name: "Frio", description: "Inimigos ficam 1% mais lentos cada vez que levam dano (até 80%)", rarity: "rare", hasEffect: true, apply: () => { playerEffects.add("Frio"); } },
+            { name: "Fragmentação+", description: "Ao morrer, inimigos liberam 6 projéteis mais fracos em direções aleatórias", rarity: "rare", hasEffect: true, apply: () => { playerEffects.add("Fragmentação+"); } },
+            { name: "Fricção+", description: "A cada metro corrido, 3 projéteis explosivos são lançados para cima", rarity: "rare", hasEffect: true, apply: () => { playerEffects.add("Fricção+"); } },
+            { name: "Foco", description: "Ganha velocidade de ataque a cada segundo que não se move. Reseta a cada onda", rarity: "rare", hasEffect: true, apply: () => { playerEffects.add("Foco"); } },
+            { name: "Crescimento++", description: "HP Máx. +40", rarity: "rare", apply: () => { player.maxHealth += 40; player.health += 40; } },
+            { name: "Imortal", description: "+1 Reviver (mata todos os inimigos ao reviver)", rarity: "rare", apply: () => { player.reviveCount += 1; playerEffects.add("Imortal"); } },
+            { name: "Sanguessuga+", description: "Roubo de Vida de 9% do Dano", rarity: "rare", apply: () => { player.lifeSteal += 9; } },
+            { name: "Superaquecimento", description: "Seu corpo causa 40 de dano no contato", rarity: "rare", apply: () => { player.overheatDamage = 40; playerEffects.add("Superaquecimento"); } },
+            { name: "Raio+", description: "Invoca 6 raios dos céus a cada poucos segundos", rarity: "rare", apply: () => { player.thunderboltCount += 6; playerEffects.add("Raio+"); } },
+            { name: "Tomo", description: "Novos itens comuns (brancos) você pegar são 35% mais eficazes", rarity: "rare", hasEffect: true, apply: () => { player.itemEffectiveness *= 1.35; playerEffects.add("Tomo"); } },
+            { name: "Fogo-Fátuo", description: "Invoca um fogo-fátuo que herda metade do seu dano de ataque e velocidade", rarity: "rare", hasEffect: true, apply: () => { spawnWisp(); playerEffects.add("Fogo-Fátuo"); } },
+            { name: "Ferida", description: "Causar dano aplica sangramento ao inimigo", rarity: "rare", hasEffect: true, apply: () => { playerEffects.add("Ferida"); } }
+        ];
+
+        // Mapeamento de efeitos especiais para verificar se foram pegos
+        const playerEffects = new Set();
+
+        // Cria as plataformas
+        function createPlatforms() {
+            platforms = [
+                { x: 0, y: 500, width: 200, height: 20 },
+                { x: 200, y: 450, width: 150, height: 20 },
+                { x: 350, y: 400, width: 150, height: 20 },
+                { x: 500, y: 450, width: 150, height: 20 },
+                { x: 650, y: 500, width: 150, height: 20 },
+                { x: 150, y: 300, width: 100, height: 20 },
+                { x: 450, y: 250, width: 100, height: 20 },
+                { x: 600, y: 350, width: 80, height: 20 }
+            ];
+        }
+
+        // Desenha o cenário de fundo gótico
+        function drawBackground() {
+            // Céu noturno (degradê de azul marinho escuro para preto)
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, '#0A0A2A'); // Azul marinho muito escuro
+            gradient.addColorStop(0.7, '#000000'); // Quase preto
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Lua crescente ou minguante
+            ctx.fillStyle = '#C0C0C0'; // Prateado
+            ctx.beginPath();
+            ctx.arc(canvas.width - 80, 70, 30, Math.PI * 0.3, Math.PI * 1.7); // Desenha um círculo
+            ctx.arc(canvas.width - 80 + 15, 70 - 5, 25, Math.PI * 0.3, Math.PI * 1.7, true); // Desenha outro círculo para cortar e formar a crescente
+            ctx.fill();
+
+            // Nuvens escuras e agourentas
+            ctx.fillStyle = 'rgba(50, 50, 60, 0.7)'; // Cinza azulado escuro semi-transparente
+            ctx.beginPath();
+            ctx.arc(150, 120, 50, 0, Math.PI * 2);
+            ctx.arc(200, 110, 60, 0, Math.PI * 2);
+            ctx.arc(170, 140, 55, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.arc(550, 100, 40, 0, Math.PI * 2);
+            ctx.arc(580, 90, 50, 0, Math.PI * 2);
+            ctx.arc(560, 110, 45, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Montanhas escuras e pontiagudas
+            ctx.fillStyle = '#1A1A1A'; // Quase preto para as montanhas
+            ctx.beginPath();
+            ctx.moveTo(0, canvas.height * 0.75);
+            ctx.lineTo(canvas.width * 0.2, canvas.height * 0.45); // Pico mais alto
+            ctx.lineTo(canvas.width * 0.4, canvas.height * 0.7);
+            ctx.lineTo(canvas.width * 0.6, canvas.height * 0.5); // Outro pico
+            ctx.lineTo(canvas.width * 0.8, canvas.height * 0.75);
+            ctx.lineTo(canvas.width, canvas.height * 0.65);
+            ctx.lineTo(canvas.width, canvas.height);
+            ctx.lineTo(0, canvas.height);
+            ctx.closePath();
+            ctx.fill();
+
+            // Silhuetas de castelos nas montanhas
+            ctx.fillStyle = '#121212';
+            // Castelo à esquerda
+            ctx.fillRect(50, canvas.height * 0.45, 20, canvas.height * 0.3);
+            ctx.fillRect(30, canvas.height * 0.45, 60, 10);
+            ctx.fillRect(40, canvas.height * 0.35, 10, 10);
+            ctx.fillRect(60, canvas.height * 0.35, 10, 10);
+            
+            // Castelo à direita
+            ctx.fillRect(canvas.width - 70, canvas.height * 0.5, 20, canvas.height * 0.25);
+            ctx.fillRect(canvas.width - 80, canvas.height * 0.5, 40, 8);
+            ctx.fillRect(canvas.width - 75, canvas.height * 0.42, 8, 8);
+            ctx.fillRect(canvas.width - 60, canvas.height * 0.42, 8, 8);
+
+            // Névoa no chão das montanhas
+            const mistGradient = ctx.createLinearGradient(0, canvas.height * 0.7, 0, canvas.height * 0.85);
+            mistGradient.addColorStop(0, 'rgba(30, 30, 40, 0)');
+            mistGradient.addColorStop(1, 'rgba(30, 30, 40, 0.7)');
+            ctx.fillStyle = mistGradient;
+            ctx.fillRect(0, canvas.height * 0.7, canvas.width, canvas.height * 0.15);
+
+            // Chão (rocha escura ou terra úmida)
+            ctx.fillStyle = '#282828'; // Cinza muito escuro
+            ctx.fillRect(0, canvas.height * 0.85, canvas.width, canvas.height * 0.15);
+        }
+
+        // Desenha as plataformas com um visual mais gótico (pedra escura, ruínas)
+        function drawPlatforms() {
+            for (const platform of platforms) {
+                // Corpo principal da plataforma
+                ctx.fillStyle = '#303030'; // Cinza escuro (pedra)
+                ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
+                
+                // Topo da plataforma (aparência de pedra lascada)
+                ctx.fillStyle = '#404040';
+                ctx.fillRect(platform.x, platform.y, platform.width, 4);
+                
+                // Detalhes de textura (rachaduras e manchas)
+                ctx.fillStyle = '#252525';
+                // Rachadura principal
+                ctx.beginPath();
+                ctx.moveTo(platform.x + 10, platform.y + 10);
+                ctx.lineTo(platform.x + platform.width - 10, platform.y + platform.height - 5);
+                ctx.stroke();
+                
+                // Pequenas rachaduras
+                for (let i = 0; i < 3; i++) {
+                    const startX = platform.x + Math.random() * platform.width;
+                    const startY = platform.y + Math.random() * platform.height;
+                    ctx.beginPath();
+                    ctx.moveTo(startX, startY);
+                    ctx.lineTo(startX + 10 - Math.random() * 20, startY + 5 - Math.random() * 10);
+                    ctx.stroke();
+                }
+            }
+        }
+
+        // Spawna um fogo-fátuo
+        function spawnWisp() {
+            wisps.push({
+                x: player.x,
+                y: player.y,
+                radius: 10,
+                damage: player.projectileDamage * 0.5,
+                speed: player.attackSpeed * 0.5,
+                lastShotTime: 0,
+                shotCooldown: 1000 / (player.attackSpeed + 0.5),
+                color: '#8A2BE2' // Azul violeta para o wisp
+            });
+        }
+
+        // Desenha um inimigo com design de monstro medieval
+        function drawEnemy(enemy) {
+            // Corpo principal (cor base)
+            ctx.fillStyle = enemy.color;
+            ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
+
+            // Cabeça (ligeiramente maior ou pontuda)
+            ctx.beginPath();
+            ctx.moveTo(enemy.x + enemy.width / 4, enemy.y);
+            ctx.lineTo(enemy.x + enemy.width * 3 / 4, enemy.y);
+            ctx.lineTo(enemy.x + enemy.width / 2, enemy.y - enemy.height / 3); // Ponta da cabeça
+            ctx.closePath();
+            ctx.fill();
+
+            // Olhos (dois pequenos círculos ou retângulos)
+            ctx.fillStyle = '#FFD700'; // Olhos amarelos/dourados
+            ctx.fillRect(enemy.x + enemy.width / 4, enemy.y + enemy.height / 4, 5, 5);
+            ctx.fillRect(enemy.x + enemy.width * 3 / 4 - 5, enemy.y + enemy.height / 4, 5, 5);
+
+            // Boca (linha ou pequena fenda)
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(enemy.x + enemy.width / 4, enemy.y + enemy.height * 2 / 3, enemy.width / 2, 3);
+
+            // Pequenos chifres ou orelhas (opcional)
+            ctx.fillStyle = enemy.color;
+            ctx.beginPath();
+            ctx.moveTo(enemy.x + enemy.width / 4, enemy.y - enemy.height / 4);
+            ctx.lineTo(enemy.x + enemy.width / 4 - 5, enemy.y - enemy.height / 2);
+            ctx.lineTo(enemy.x + enemy.width / 4 + 5, enemy.y - enemy.height / 2);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.moveTo(enemy.x + enemy.width * 3 / 4, enemy.y - enemy.height / 4);
+            ctx.lineTo(enemy.x + enemy.width * 3 / 4 - 5, enemy.y - enemy.height / 2);
+            ctx.lineTo(enemy.x + enemy.width * 3 / 4 + 5, enemy.y - enemy.height / 2);
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        // Desenha o chefe com design de monstro medieval maior
+        function drawBoss(boss) {
+            // Corpo principal (muito maior)
+            ctx.fillStyle = boss.color;
+            ctx.fillRect(boss.x, boss.y, boss.width, boss.height);
+
+            // Cabeça grande e angular
+            ctx.beginPath();
+            ctx.moveTo(boss.x + boss.width * 0.2, boss.y);
+            ctx.lineTo(boss.x + boss.width * 0.8, boss.y);
+            ctx.lineTo(boss.x + boss.width * 0.9, boss.y - boss.height * 0.3); // Chifre/ponta direita
+            ctx.lineTo(boss.x + boss.width * 0.5, boss.y - boss.height * 0.5); // Centro da cabeça
+            ctx.lineTo(boss.x + boss.width * 0.1, boss.y - boss.height * 0.3); // Chifre/ponta esquerda
+            ctx.closePath();
+            ctx.fill();
+
+            // Olhos vermelhos e brilhantes
+            ctx.fillStyle = '#FF0000';
+            ctx.fillRect(boss.x + boss.width * 0.3, boss.y + boss.height * 0.3, boss.width * 0.08, boss.height * 0.08);
+            ctx.fillRect(boss.x + boss.width * 0.7 - boss.width * 0.08, boss.y + boss.height * 0.3, boss.width * 0.08, boss.height * 0.08);
+
+            // Boca com dentes pontudos
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(boss.x + boss.width * 0.25, boss.y + boss.height * 0.6, boss.width * 0.5, boss.height * 0.1);
+            ctx.fillStyle = '#FFFFFF'; // Dentes
+            ctx.beginPath();
+            ctx.moveTo(boss.x + boss.width * 0.3, boss.y + boss.height * 0.7);
+            ctx.lineTo(boss.x + boss.width * 0.32, boss.y + boss.height * 0.6);
+            ctx.lineTo(boss.x + boss.width * 0.34, boss.y + boss.height * 0.7);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(boss.x + boss.width * 0.66, boss.y + boss.height * 0.7);
+            ctx.lineTo(boss.x + boss.width * 0.68, boss.y + boss.height * 0.6);
+            ctx.lineTo(boss.x + boss.width * 0.7, boss.y + boss.height * 0.7);
+            ctx.fill();
+
+            // Asas ou espinhos nas costas (simples)
+            ctx.fillStyle = boss.color;
+            ctx.beginPath();
+            ctx.moveTo(boss.x + boss.width, boss.y + boss.height * 0.2);
+            ctx.lineTo(boss.x + boss.width + 20, boss.y + boss.height * 0.1);
+            ctx.lineTo(boss.x + boss.width, boss.y + boss.height * 0.4);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(boss.x, boss.y + boss.height * 0.2);
+            ctx.lineTo(boss.x - 20, boss.y + boss.height * 0.1);
+            ctx.lineTo(boss.x, boss.y + boss.height * 0.4);
+            ctx.fill();
+        }
+
+        // Desenha o jogador como um mago medieval
+        function drawPlayer() {
+            const now = Date.now();
+            
+            // Chapéu do mago
+            ctx.fillStyle = '#2F0057'; // Roxo escuro
+            ctx.beginPath();
+            ctx.moveTo(player.x - 10, player.y);
+            ctx.lineTo(player.x + player.width + 10, player.y);
+            ctx.lineTo(player.x + player.width / 2, player.y - player.height * 0.7);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Corpo do mago (capa)
+            if (now < invincibleUntil && Math.floor(now / 100) % 2 === 0) {
+                ctx.fillStyle = '#ffffff'; // Pisca branco quando invencível
+            } else {
+                ctx.fillStyle = player.health < player.maxHealth * 0.5 ? '#8B0000' : '#4B0082'; // Roxo, vermelho se vida baixa
+            }
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+            
+            // Detalhes da capa
+            ctx.fillStyle = '#2F0057';
+            ctx.fillRect(player.x, player.y + player.height * 0.7, player.width, player.height * 0.3);
+            
+            // Cinto
+            ctx.fillStyle = '#5a3921'; // Marrom escuro
+            ctx.fillRect(player.x, player.y + player.height * 0.6, player.width, 4);
+            
+            // Olhos
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(player.x + player.width * 0.3, player.y + player.height * 0.3, 4, 4);
+            ctx.fillRect(player.x + player.width * 0.7 - 4, player.y + player.height * 0.3, 4, 4);
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(player.x + player.width * 0.3 + 1, player.y + player.height * 0.3 + 1, 2, 2);
+            ctx.fillRect(player.x + player.width * 0.7 - 3, player.y + player.height * 0.3 + 1, 2, 2);
+            
+            // Varinha (quando atira)
+            if (isMouseDown) {
+                ctx.strokeStyle = '#8A2BE2';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(player.x + player.width / 2, player.y + player.height / 2);
+                
+                // Direção da varinha (aponta para o mouse)
+                const rect = canvas.getBoundingClientRect();
+                const mouseX = rect.left;
+                const mouseY = rect.top;
+                const dx = mouseX - (player.x + player.width / 2);
+                const dy = mouseY - (player.y + player.height / 2);
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                const directionX = dx / distance;
+                const directionY = dy / distance;
+                
+                ctx.lineTo(
+                    player.x + player.width / 2 + directionX * 30,
+                    player.y + player.height / 2 + directionY * 30
+                );
+                ctx.stroke();
+                
+                // Brilho na ponta da varinha
+                ctx.fillStyle = '#FF00FF';
+                ctx.beginPath();
+                ctx.arc(
+                    player.x + player.width / 2 + directionX * 30,
+                    player.y + player.height / 2 + directionY * 30,
+                    3, 0, Math.PI * 2
+                );
+                ctx.fill();
+            }
+        }
+
+        // Spawna um inimigo
+        function spawnEnemy(healthMultiplier, speedMultiplier, damageMultiplier, isBoss = false) {
+            const now = Date.now();
+            const baseHealth = 20;
+            const baseSpeed = 1.5;
+            const baseDamage = 8;
+            const maxEnemyY = canvas.height * 0.7;
+
+            let health = baseHealth * healthMultiplier;
+            let speed = baseSpeed * speedMultiplier;
+            let damage = baseDamage * damageMultiplier;
+            let width = 30;
+            let height = 30;
+            let color = '#8B0000'; // Vermelho escuro padrão
+            let type = 'normal';
+            let targetY = Math.random() * (maxEnemyY - canvas.height * 0.1) + canvas.height * 0.1;
+
+            if (isBoss) {
+                health *= 15;
+                damage *= 3;
+                speed *= 0.7;
+                width = 80;
+                height = 80;
+                color = '#5A005A'; // Cor do chefão (roxo bem escuro)
+                type = 'boss';
+                targetY = canvas.height * 0.3;
+            } else {
+                type = Math.random() < (0.1 + currentWave * 0.01) ? 'strong' : 'normal';
+                if (type === 'strong') {
+                    health *= 2;
+                    speed *= 0.8;
+                    color = '#4B0082'; // Inimigo forte roxo escuro
+                }
+            }
+
+            enemies.push({
+                x: Math.random() * canvas.width,
+                y: -50,
+                width: width,
+                height: height,
+                speed: speed,
+                targetY: targetY,
+                health: health,
+                maxHealth: health,
+                damage: damage,
+                type: type,
+                reachedPosition: false,
+                followDelay: Math.random() * 500 + 200,
+                lastFollowUpdate: now,
+                slowFactor: 1,
+                bleedingStacks: 0,
+                bleedingTimer: 0,
+                color: color,
+                randomOffsetX: (Math.random() - 0.5) * 2,
+                randomOffsetY: (Math.random() - 0.5) * 2,
+                randomMoveCooldown: 0,
+                lastRandomMoveTime: now,
+                isBoss: isBoss
+            });
+        }
+
+        // Jogador atira
+        function shoot(targetX, targetY) {
+            if (gamePhase !== 'playing') return;
+            const now = Date.now();
+            if (now - lastShotTime < shotCooldown / player.attackSpeed) return;
+            lastShotTime = now;
+
+            // Calcula direção
+            const dx = targetX - (player.x + player.width / 2);
+            const dy = targetY - (player.y + player.height / 2);
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            const directionX = dx / distance;
+            const directionY = dy / distance;
+
+            // Verifica chance crítica
+            let isCritical = false;
+            if (Math.random() * 100 < player.criticalChance) {
+                isCritical = true;
+            }
+
+            let damage = player.projectileDamage;
+            if (isCritical) {
+                damage *= 1.5;
+                if (playerEffects.has("Precisão")) {
+                    damage *= 1.5;
+                }
+            }
+
+            // Bônus de fúria se a vida estiver baixa
+            if (playerEffects.has("Fúria") && player.health < player.maxHealth * 0.5) {
+                const rageBonus = 1 + (0.5 * (1 - (player.health / (player.maxHealth * 0.5))));
+                damage *= rageBonus;
+            }
+
+            playerProjectiles.push({
+                x: player.x + player.width / 2,
+                y: player.y + player.height / 2,
+                radius: 5 * player.projectileSize,
+                speedX: directionX * 10,
+                speedY: directionY * 10,
+                damage: damage,
+                hitsLeft: player.projectileHits,
+                isCritical: isCritical,
+                appliesWound: playerEffects.has("Ferida"),
+                color: isCritical ? '#FFD700' : '#8A2BE2' // Dourado para crítico, roxo para normal
+            });
+        }
+
+        // Inimigo atira
+        function enemyShoot(enemy) {
+            const now = Date.now();
+            const actualEnemyShotCooldown = enemyShotCooldown / (1 + (currentWave * 0.03));
+            if (now - enemy.lastShotTime < actualEnemyShotCooldown / enemy.slowFactor) return;
+            enemy.lastShotTime = now;
+
+            // Calcula direção para o jogador
+            const dx = (player.x + player.width / 2) - (enemy.x + enemy.width / 2);
+            const dy = (player.y + player.height / 2) - (enemy.y + enemy.height / 2);
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            const directionX = dx / distance;
+            const directionY = dy / distance;
+
+            enemyProjectiles.push({
+                x: enemy.x + enemy.width / 2,
+                y: enemy.y + enemy.height / 2,
+                radius: 7,
+                speedX: directionX * 4 * enemy.slowFactor,
+                speedY: directionY * 4 * enemy.slowFactor,
+                damage: enemy.damage,
+                color: '#8B0000' // Vermelho escuro para projéteis inimigos
+            });
+        }
+
+        // Verifica colisão entre dois retângulos
+        function checkCollision(obj1, obj2) {
+            return obj1.x < obj2.x + obj2.width &&
+                   obj1.x + obj1.width > obj2.x &&
+                   obj1.y < obj2.y + obj2.height &&
+                   obj1.y + obj1.height > obj2.y;
+        }
+
+        // Verifica colisão entre círculo e retângulo
+        function checkCircleRectCollision(circle, rect) {
+            const distX = Math.abs(circle.x - rect.x - rect.width / 2);
+            const distY = Math.abs(circle.y - rect.y - rect.height / 2);
+
+            if (distX > (rect.width / 2 + circle.radius)) return false;
+            if (distY > (rect.height / 2 + circle.radius)) return false;
+
+            if (distX <= (rect.width / 2)) return true;
+            if (distY <= (rect.height / 2)) return true;
+
+            const dx = distX - rect.width / 2;
+            const dy = distY - rect.height / 2;
+            return (dx * dx + dy * dy <= (circle.radius * circle.radius));
+        }
+
+        // Lida com o subir de nível
+        function showLevelUpScreen() {
+            gamePhase = 'levelingUp';
+            uiElements.levelUpScreen.style.display = 'block';
+            uiElements.levelDisplay.textContent = level;
+
+            const upgradeContainer = uiElements.upgradeOptions;
+            upgradeContainer.innerHTML = '';
+
+            let numChoices = 3;
+            if (playerEffects.has("Avaliação")) {
+                numChoices = 4;
+            }
+
+            let availableUpgrades = upgrades.filter(u => !playerEffects.has(u.name));
+
+            // Lógica para upgrades especiais após chefão
+            if (bossUpgradesNext) {
+                availableUpgrades = availableUpgrades.filter(u => u.rarity === 'rare' || u.rarity === 'uncommon');
+                bossUpgradesNext = false;
+                if (availableUpgrades.length < numChoices) {
+                    availableUpgrades = upgrades.filter(u => !playerEffects.has(u.name));
+                }
+            }
+
+            // Lógica para "Sorte"
+            if (playerEffects.has("Sorte")) {
+                const common = availableUpgrades.filter(u => u.rarity === 'common');
+                const uncommon = availableUpgrades.filter(u => u.rarity === 'uncommon');
+                const rare = availableUpgrades.filter(u => u.rarity === 'rare');
+
+                availableUpgrades = [];
+                for (let i = 0; i < numChoices; i++) {
+                    if (rare.length > 0) {
+                        availableUpgrades.push(rare.shift());
+                    } else if (uncommon.length > 0) {
+                        availableUpgrades.push(uncommon.shift());
+                    } else if (common.length > 0) {
+                        availableUpgrades.push(common.shift());
+                    } else {
+                        break;
+                    }
+                }
+                availableUpgrades.sort(() => Math.random() - 0.5);
+            } else {
+                availableUpgrades.sort(() => Math.random() - 0.5);
+                availableUpgrades = availableUpgrades.slice(0, numChoices);
+            }
+            
+            const uniqueUpgrades = [];
+            const upgradeNames = new Set();
+            for(const upgrade of availableUpgrades){
+                if(!upgradeNames.has(upgrade.name)){
+                    uniqueUpgrades.push(upgrade);
+                    upgradeNames.add(upgrade.name);
+                }
+            }
+            availableUpgrades = uniqueUpgrades;
+
+            upgradeOptionsPool = [];
+            for (const upgrade of availableUpgrades) {
+                if (upgradeOptionsPool.length < numChoices) {
+                    upgradeOptionsPool.push(upgrade);
+                } else {
+                    break;
+                }
+            }
+
+            upgradeOptionsPool.forEach((upgrade, index) => {
+                const option = document.createElement('div');
+                option.className = 'upgradeOption';
+                option.innerHTML = `<h3>${upgrade.name}</h3><p>${upgrade.description}</p>`;
+                option.addEventListener('click', () => selectUpgrade(index));
+                upgradeContainer.appendChild(option);
+            });
+        }
+
+        // Seleciona uma melhoria
+        function selectUpgrade(index) {
+            const selectedUpgrade = upgradeOptionsPool[index];
+            selectedUpgrade.apply();
+            playerEffects.add(selectedUpgrade.name);
+
+            exp -= expToNextLevel;
+            level++;
+            expToNextLevel = Math.floor(expToNextLevel * 1.5);
+
+            uiElements.levelUpScreen.style.display = 'none';
+            startWave(); 
+        }
+
+        // Fim de jogo
+        function gameOver() {
+            gamePhase = 'gameOver';
+            uiElements.finalLevel.textContent = level;
+            uiElements.finalWave.textContent = currentWave;
+            uiElements.gameOverScreen.style.display = 'block';
+
+            saveScore({ wave: currentWave, level: level });
+        }
+
+        // Reinicia o jogo
+        function restartGame() {
+            player.maxHealth = 100;
+            player.health = 100;
+            player.x = 100;
+            player.y = 400;
+            player.velocityY = 0;
+            player.isJumping = false;
+            player.speed = 5;
+            player.jumpForce = 12;
+            player.projectileDamage = 10;
+            player.criticalChance = 0;
+            player.attackSpeed = 1;
+            player.defense = 0;
+            player.movementSpeed = 1;
+            player.jumpHeight = 1;
+            player.lifeSteal = 0;
+            player.projectileSize = 1;
+            player.projectileHits = 1;
+            player.size = 1;
+            player.thunderboltCount = 0;
+            player.itemEffectiveness = 1;
+            player.reviveCount = 0;
+            player.gushJumps = 1;
+            player.currentJumps = 1;
+            player.frictionRunDistance = 0;
+            player.overheatDamage = 0;
+
+            level = 1;
+            exp = 0;
+            expToNextLevel = 100;
+            enemies = [];
+            enemyProjectiles = [];
+            playerProjectiles = [];
+            orbs = [];
+            wisps = [];
+            lastShotTime = 0;
+            enemyShotCooldown = 1000;
+            invincibleUntil = 0;
+            invincibleDuration = 500;
+            thunderboltCooldown = 0;
+            barrierActive = false;
+            barrierCooldown = 0;
+            lastMovementTime = 0;
+            stationaryTime = 0;
+            playerEffects.clear();
+            currentWave = 0;
+            isBossWave = false;
+            bossUpgradesNext = false;
+
+            uiElements.gameOverScreen.style.display = 'none';
+            uiElements.levelDisplay.textContent = level;
+            uiElements.waveDisplay.textContent = currentWave;
+            updateHealthBar();
+            updateExpBar();
+
+            startWave();
+        }
+
+        // Inicia uma nova onda de inimigos
+        function startWave() {
+            currentWave++;
+            uiElements.waveDisplay.textContent = currentWave;
+            uiElements.waveCompleteScreen.style.display = 'none';
+            uiElements.levelUpScreen.style.display = 'none';
+
+            enemies = [];
+            enemyProjectiles = [];
+            playerProjectiles = [];
+            orbs = [];
+
+            isBossWave = (currentWave % 5 === 0);
+
+            if (isBossWave) {
+                spawnEnemy(1, 1, 1, true);
+                totalEnemiesInWave = 1;
+            } else {
+                const enemyCount = 3 + Math.floor(currentWave * 0.8);
+                const healthMultiplier = 1 + (currentWave * 0.07);
+                const speedMultiplier = 1 + (currentWave * 0.05);
+                const damageMultiplier = 1 + (currentWave * 0.07);
+
+                totalEnemiesInWave = enemyCount;
+
+                for (let i = 0; i < enemyCount; i++) {
+                    spawnEnemy(healthMultiplier, speedMultiplier, damageMultiplier);
+                }
+            }
+            gamePhase = 'playing';
+            lastMovementTime = Date.now();
+            stationaryTime = 0;
+        }
+
+        // Lida com o fim de uma onda
+        function endWave() {
+            gamePhase = 'waveComplete';
+            uiElements.waveCompleteScreen.style.display = 'block';
+
+            exp += 50 + (currentWave * 10);
+            updateExpBar();
+
+            uiElements.nextWaveButton.onclick = () => {
+                uiElements.waveCompleteScreen.style.display = 'none';
+                if (exp >= expToNextLevel) {
+                    showLevelUpScreen();
+                } else {
+                    startWave();
+                }
+            };
+        }
+
+        // Atualiza barra de vida do jogador
+        function updateHealthBar() {
+            const healthPercent = (player.health / player.maxHealth);
+            uiElements.healthBar.style.width = `${healthPercent * 200}px`;
+            uiElements.healthText.textContent = `${Math.floor(player.health)}/${player.maxHealth}`;
+        }
+
+        // Atualiza barra de experiência
+        function updateExpBar() {
+            const expPercent = Math.min(1, exp / expToNextLevel);
+            uiElements.expBar.style.width = `${expPercent * 200}px`;
+        }
+
+        // Spawna raios
+        function spawnThunderbolts() {
+            if (player.thunderboltCount <= 0) return;
+
+            const count = player.thunderboltCount;
+            for (let i = 0; i < count; i++) {
+                if (enemies.length > 0) {
+                    const randomEnemy = enemies[Math.floor(Math.random() * enemies.length)];
+                    playerProjectiles.push({
+                        x: randomEnemy.x + randomEnemy.width / 2,
+                        y: 0,
+                        radius: 15,
+                        speedX: 0,
+                        speedY: 25,
+                        damage: player.projectileDamage * 0.8,
+                        hitsLeft: 1,
+                        isThunderbolt: true,
+                        color: '#6A5ACD'
+                    });
+                }
+            }
+        }
+
+        // Lida com o dano ao jogador
+        function takeDamage(damage) {
+            if (gamePhase !== 'playing') return;
+            const now = Date.now();
+            if (now < invincibleUntil) return;
+
+            if (playerEffects.has("Barreira") && !barrierActive && now - barrierCooldown > 7000) {
+                barrierActive = true;
+                barrierCooldown = now;
+                setTimeout(() => { barrierActive = false; }, 100);
+                return;
+            }
+
+            player.health -= damage * (1 - player.defense / 100);
+            invincibleUntil = now + invincibleDuration;
+            updateHealthBar();
+
+            if (player.health <= 0) {
+                if (player.reviveCount > 0) {
+                    player.reviveCount--;
+                    player.health = player.maxHealth;
+                    enemies = [];
+                    enemyProjectiles = [];
+                    updateHealthBar();
+                    if (enemies.length === 0) {
+                        endWave();
+                    }
+                } else {
+                    gameOver();
+                }
+            }
+        }
+
+        // --- Funções de Ranking ---
+        function getRanking() {
+            const ranking = localStorage.getItem('gameRanking');
+            return ranking ? JSON.parse(ranking) : [];
+        }
+
+        function saveRanking(ranking) {
+            localStorage.setItem('gameRanking', JSON.stringify(ranking));
+        }
+
+        function saveScore(newScore) {
+            const ranking = getRanking();
+            ranking.push(newScore);
+            ranking.sort((a, b) => {
+                if (b.wave !== a.wave) {
+                    return b.wave - a.wave;
+                }
+                return b.level - a.level;
+            });
+            const top5 = ranking.slice(0, 5);
+            saveRanking(top5);
+        }
+
+        function displayRanking() {
+            const ranking = getRanking();
+            const rankingList = uiElements.rankingList;
+            rankingList.innerHTML = '';
+
+            if (ranking.length === 0) {
+                const li = document.createElement('li');
+                li.textContent = 'Nenhuma pontuação registrada ainda.';
+                rankingList.appendChild(li);
+                return;
+            }
+
+            ranking.forEach((score, index) => {
+                const li = document.createElement('li');
+                li.textContent = `${index + 1}. Onda: ${score.wave}, Nível: ${score.level}`;
+                rankingList.appendChild(li);
+            });
+        }
+
+        // Inicializa o jogo
+        function init() {
+            createPlatforms();
+
+            // Listeners de Eventos
+            document.addEventListener('keydown', (e) => {
+                if (gamePhase === 'playing') {
+                    keys[e.key.toLowerCase()] = true;
+
+                    if (e.key === ' ' && player.currentJumps > 0) {
+                        player.velocityY = -player.jumpForce * player.jumpHeight;
+                        player.isJumping = true;
+                        player.currentJumps--;
+                    }
+                }
+            });
+
+            document.addEventListener('keyup', (e) => {
+                if (gamePhase === 'playing') {
+                    keys[e.key.toLowerCase()] = false;
+                }
+            });
+
+            canvas.addEventListener('mousedown', (e) => {
+                if (gamePhase === 'playing') {
+                    isMouseDown = true;
+                    const rect = canvas.getBoundingClientRect();
+                    const mouseX = e.clientX - rect.left;
+                    const mouseY = e.clientY - rect.top;
+                    shoot(mouseX, mouseY);
+                }
+            });
+
+            canvas.addEventListener('mouseup', () => {
+                if (gamePhase === 'playing') {
+                    isMouseDown = false;
+                }
+            });
+
+            canvas.addEventListener('mousemove', (e) => {
+                if (gamePhase === 'playing' && isMouseDown) {
+                    const rect = canvas.getBoundingClientRect();
+                    const mouseX = e.clientX - rect.left;
+                    const mouseY = e.clientY - rect.top;
+                    shoot(mouseX, mouseY);
+                }
+            });
+
+            // Botões da tela de início
+            uiElements.startButton.addEventListener('click', () => {
+                uiElements.startScreen.style.display = 'none';
+                restartGame();
+            });
+
+            uiElements.rankingButton.addEventListener('click', () => {
+                uiElements.startScreen.style.display = 'none';
+                uiElements.rankingScreen.style.display = 'block';
+                displayRanking();
+                gamePhase = 'ranking';
+            });
+
+            uiElements.backToStartButton.addEventListener('click', () => {
+                uiElements.rankingScreen.style.display = 'none';
+                uiElements.startScreen.style.display = 'block';
+                gamePhase = 'start';
+            });
+
+            // Botões das telas de jogo
+            uiElements.restartButton.addEventListener('click', restartGame);
+
+            // Mostra a tela de início inicialmente
+            uiElements.startScreen.style.display = 'block';
+
+            // Inicia o loop do jogo
+            gameLoop();
+        }
+
+        // Loop principal do jogo
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            drawBackground();
+            drawPlatforms();
+
+            const now = Date.now();
+
+            if (gamePhase === 'playing') {
+                const currentSpeed = player.speed * player.movementSpeed;
+                const wasMoving = keys['a'] || keys['d'];
+                if (keys['a']) {
+                    player.x -= currentSpeed;
+                    player.direction = -1;
+                    player.frictionRunDistance += currentSpeed;
+                }
+                if (keys['d']) {
+                    player.x += currentSpeed;
+                    player.direction = 1;
+                    player.frictionRunDistance += currentSpeed;
+                }
+
+                if (wasMoving) {
+                    lastMovementTime = now;
+                    if (playerEffects.has("Foco")) {
+                        player.attackSpeed = 1;
+                    }
+                } else {
+                    if (playerEffects.has("Foco")) {
+                        stationaryTime = (now - lastMovementTime) / 1000;
+                        const focusBonus = Math.min(2, 1 + stationaryTime * 0.1);
+                        player.attackSpeed = focusBonus;
+                    }
+                }
+
+                if (playerEffects.has("Fricção") || playerEffects.has("Fricção+")) {
+                    let requiredDistance = 100;
+                    if (playerEffects.has("Fricção+")) {
+                        requiredDistance = 33;
+                    }
+
+                    if (player.frictionRunDistance >= requiredDistance) {
+                        let projectilesToLaunch = playerEffects.has("Fricção+") ? 3 : 1;
+                        for (let i = 0; i < projectilesToLaunch; i++) {
+                            playerProjectiles.push({
+                                x: player.x + player.width / 2,
+                                y: player.y + player.height / 2,
+                                radius: 8,
+                                speedX: (Math.random() - 0.5) * 5,
+                                speedY: -10,
+                                damage: player.projectileDamage * 0.7,
+                                hitsLeft: 1,
+                                color: '#A52A2A'
+                            });
+                        }
+                        player.frictionRunDistance = 0;
+                    }
+                }
+
+                player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
+
+                player.velocityY += 0.5;
+                player.y += player.velocityY;
+
+                let onPlatform = false;
+                for (const platform of platforms) {
+                    if (player.velocityY > 0 &&
+                        player.x < platform.x + platform.width &&
+                        player.x + player.width > platform.x &&
+                        player.y + player.height >= platform.y &&
+                        player.y + player.height <= platform.y + 20) {
+
+                        player.y = platform.y - player.height;
+                        player.velocityY = 0;
+                        player.isJumping = false;
+                        player.currentJumps = player.gushJumps;
+                        onPlatform = true;
+                        break;
+                    }
+                }
+
+                if (!onPlatform && player.velocityY === 0 && !player.isJumping) {
+                    player.isJumping = true;
+                }
+                if (player.y > canvas.height) {
+                    takeDamage(player.maxHealth);
+                }
+
+                // Atualiza inimigos
+                for (let i = enemies.length - 1; i >= 0; i--) {
+                    const enemy = enemies[i];
+
+                    if (!enemy.reachedPosition) {
+                        enemy.y += enemy.speed;
+                        if (enemy.y >= enemy.targetY) {
+                            enemy.reachedPosition = true;
+                        }
+                    } else {
+                        if (now - enemy.lastRandomMoveTime > enemy.randomMoveCooldown) {
+                            enemy.randomOffsetX = (Math.random() - 0.5) * enemy.speed * 1.5;
+                            enemy.randomOffsetY = (Math.random() - 0.5) * enemy.speed * 1.5;
+                            enemy.randomMoveCooldown = Math.random() * 400 + 200;
+                            enemy.lastRandomMoveTime = now;
+                        }
+
+                        const dx = (player.x + player.width / 2) - (enemy.x + enemy.width / 2);
+                        const dy = (player.y + player.height / 2) - (enemy.y + enemy.height / 2);
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+
+                        let moveX = (dx / distance) * enemy.speed;
+                        let moveY = (dy / distance) * enemy.speed;
+
+                        moveX += enemy.randomOffsetX;
+                        moveY += enemy.randomOffsetY;
+
+                        enemy.x += moveX * enemy.slowFactor;
+                        enemy.y += moveY * enemy.slowFactor;
+
+                        enemy.x = Math.max(0, Math.min(canvas.width - enemy.width, enemy.x));
+                        enemy.y = Math.max(0, Math.min(enemy.targetY, enemy.y));
+
+                        if (Math.random() < 0.015 + currentWave * 0.001) {
+                            enemyShoot(enemy);
+                        }
+                    }
+
+                    if (enemy.bleedingStacks > 0) {
+                        if (now - enemy.bleedingTimer > 1000) {
+                            enemy.health -= enemy.bleedingStacks * 0.7;
+                            enemy.bleedingTimer = now;
+                        }
+                    }
+
+                    if (now > invincibleUntil && checkCollision(player, enemy)) {
+                        takeDamage(enemy.damage);
+                        if (playerEffects.has("Superaquecimento") && player.overheatDamage > 0) {
+                            enemy.health -= player.overheatDamage;
+                        }
+                    }
+
+                    if (enemy.isBoss) {
+                        drawBoss(enemy);
+                    } else {
+                        drawEnemy(enemy);
+                    }
+
+                    const enemyHealthPercent = enemy.health / enemy.maxHealth;
+                    ctx.fillStyle = '#ff0000';
+                    ctx.fillRect(enemy.x, enemy.y - 10, enemy.width * enemyHealthPercent, 5);
+                    
+                    ctx.fillStyle = 'white';
+                    ctx.font = '10px "MedievalSharp"';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(`${Math.floor(enemy.health)}/${Math.floor(enemy.maxHealth)}`, enemy.x + enemy.width / 2, enemy.y - 15);
+
+                    if (enemy.health <= 0) {
+                        exp += enemy.type === 'strong' ? 30 : (enemy.isBoss ? 200 : 15);
+
+                        if (enemy.isBoss) {
+                            bossUpgradesNext = true;
+                        }
+
+                        if (playerEffects.has("Orbe") && Math.random() < 0.05) {
+                            orbs.push({
+                                x: enemy.x + enemy.width / 2,
+                                y: enemy.y + enemy.height / 2,
+                                radius: 10,
+                                healAmount: 20,
+                                color: '#006400'
+                            });
+                        }
+
+                        if (playerEffects.has("Fragmentação") || playerEffects.has("Fragmentação+")) {
+                            const fragments = playerEffects.has("Fragmentação+") ? 6 : 2;
+                            for (let k = 0; k < fragments; k++) {
+                                const angle = Math.random() * Math.PI * 2;
+                                playerProjectiles.push({
+                                    x: enemy.x + enemy.width / 2,
+                                    y: enemy.y + enemy.height / 2,
+                                    radius: 3,
+                                    speedX: Math.cos(angle) * 5,
+                                    speedY: Math.sin(angle) * 5,
+                                    damage: player.projectileDamage * 0.3,
+                                    hitsLeft: 1,
+                                    color: '#DAA520'
+                                });
+                            }
+                        }
+
+                        enemies.splice(i, 1);
+                        continue;
+                    }
+                }
+
+                // Atualiza projéteis do jogador
+                for (let i = playerProjectiles.length - 1; i >= 0; i--) {
+                    const projectile = playerProjectiles[i];
+                    projectile.x += projectile.speedX;
+                    projectile.y += projectile.speedY;
+
+                    if (projectile.x < 0 || projectile.x > canvas.width ||
+                        projectile.y < 0 || projectile.y > canvas.height) {
+                        playerProjectiles.splice(i, 1);
+                        continue;
+                    }
+
+                    let hitEnemy = false;
+                    for (let j = enemies.length - 1; j >= 0; j--) {
+                        const enemy = enemies[j];
+                        if (checkCircleRectCollision(projectile, enemy)) {
+                            enemy.health -= projectile.damage;
+
+                            if (playerEffects.has("Frio") && enemy.slowFactor > 0.2) {
+                                enemy.slowFactor = Math.max(0.2, enemy.slowFactor * 0.99);
+                            }
+
+                            if (projectile.appliesWound) {
+                                enemy.bleedingStacks += 1;
+                            }
+
+                            if (player.lifeSteal > 0) {
+                                player.health = Math.min(player.maxHealth, player.health + projectile.damage * (player.lifeSteal / 100));
+                                updateHealthBar();
+                            }
+
+                            projectile.hitsLeft--;
+                            hitEnemy = true;
+
+                            if (enemy.health <= 0) {
+                                exp += enemy.type === 'strong' ? 30 : (enemy.isBoss ? 200 : 15);
+
+                                if (enemy.isBoss) {
+                                    bossUpgradesNext = true;
+                                }
+
+                                if (playerEffects.has("Almas") && Math.random() < 0.01) {
+                                    orbs.push({
+                                        x: enemy.x + enemy.width / 2,
+                                        y: enemy.y + enemy.height / 2,
+                                        radius: 8,
+                                        healAmount: player.maxHealth * 0.1,
+                                        color: '#4B0082'
+                                    });
+                                }
+
+                                if (playerEffects.has("Fragmentação") || playerEffects.has("Fragmentação+")) {
+                                    const fragments = playerEffects.has("Fragmentação+") ? 6 : 2;
+                                    for (let k = 0; k < fragments; k++) {
+                                        const angle = Math.random() * Math.PI * 2;
+                                        playerProjectiles.push({
+                                            x: enemy.x + enemy.width / 2,
+                                            y: enemy.y + enemy.height / 2,
+                                            radius: 3,
+                                            speedX: Math.cos(angle) * 5,
+                                            speedY: Math.sin(angle) * 5,
+                                            damage: projectile.damage * 0.3,
+                                            hitsLeft: 1,
+                                            color: '#DAA520'
+                                        });
+                                    }
+                                }
+
+                                enemies.splice(j, 1);
+                            }
+                            break;
+                        }
+                    }
+
+                    if (hitEnemy && projectile.hitsLeft <= 0) {
+                        playerProjectiles.splice(i, 1);
+                        continue;
+                    }
+
+                    ctx.fillStyle = projectile.color;
+                    ctx.beginPath();
+                    ctx.arc(projectile.x, projectile.y, projectile.radius, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                // Atualiza projéteis inimigos
+                for (let i = enemyProjectiles.length - 1; i >= 0; i--) {
+                    const projectile = enemyProjectiles[i];
+                    projectile.x += projectile.speedX;
+                    projectile.y += projectile.speedY;
+
+                    if (projectile.x < 0 || projectile.x > canvas.width ||
+                        projectile.y < 0 || projectile.y > canvas.height) {
+                        enemyProjectiles.splice(i, 1);
+                        continue;
+                    }
+
+                    if (checkCircleRectCollision(projectile, player)) {
+                        takeDamage(projectile.damage);
+                        enemyProjectiles.splice(i, 1);
+                        continue;
+                    }
+
+                    ctx.fillStyle = projectile.color;
+                    ctx.beginPath();
+                    ctx.arc(projectile.x, projectile.y, projectile.radius, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                // Atualiza orbs (curadores e de alma)
+                for (let i = orbs.length - 1; i >= 0; i--) {
+                    const orb = orbs[i];
+
+                    const dx = (player.x + player.width / 2) - orb.x;
+                    const dy = (player.y + player.height / 2) - orb.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    const speed = 2;
+
+                    if (distance > 5) {
+                        orb.x += (dx / distance) * speed;
+                        orb.y += (dy / distance) * speed;
+                    }
+
+                    if (distance < orb.radius + player.width / 2) {
+                        player.health = Math.min(player.maxHealth, player.health + orb.healAmount);
+                        updateHealthBar();
+                        orbs.splice(i, 1);
+                        continue;
+                    }
+
+                    ctx.fillStyle = orb.color;
+                    ctx.beginPath();
+                    ctx.arc(orb.x, orb.y, orb.radius, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                // Atualiza fogo-fátuos (wisps)
+                for (let i = 0; i < wisps.length; i++) {
+                    const wisp = wisps[i];
+
+                    let nearestEnemy = null;
+                    let minDistance = Infinity;
+
+                    for (const enemy of enemies) {
+                        const dx = enemy.x - wisp.x;
+                        const dy = enemy.y - wisp.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+
+                        if (distance < minDistance) {
+                            minDistance = distance;
+                            nearestEnemy = enemy;
+                        }
+                    }
+
+                    if (nearestEnemy) {
+                        const dx = nearestEnemy.x - wisp.x;
+                        const dy = nearestEnemy.y - wisp.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+
+                        if (distance > 50) {
+                            wisp.x += (dx / distance) * 2;
+                            wisp.y += (dy / distance) * 2;
+                        }
+
+                        if (now - wisp.lastShotTime > wisp.shotCooldown) {
+                            wisp.lastShotTime = now;
+
+                            const edx = nearestEnemy.x - wisp.x;
+                            const edy = nearestEnemy.y - wisp.y;
+                            const edistance = Math.sqrt(edx * edx + edy * edy);
+
+                            playerProjectiles.push({
+                                x: wisp.x,
+                                y: wisp.y,
+                                radius: 5,
+                                speedX: (edx / edistance) * 8,
+                                speedY: (edy / edistance) * 8,
+                                damage: wisp.damage,
+                                hitsLeft: 1,
+                                color: wisp.color
+                            });
+                        }
+                    } else {
+                        const dx = player.x - wisp.x;
+                        const dy = player.y - wisp.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+
+                        if (distance > 50) {
+                            wisp.x += (dx / distance) * 2;
+                            wisp.y += (dy / distance) * 2;
+                        }
+                    }
+
+                    ctx.fillStyle = wisp.color;
+                    ctx.beginPath();
+                    ctx.arc(wisp.x, wisp.y, wisp.radius, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                // Habilidade Raio/Raio+
+                if ((playerEffects.has("Raio") || playerEffects.has("Raio+")) && now - thunderboltCooldown > 5000) {
+                    thunderboltCooldown = now;
+                    spawnThunderbolts();
+                }
+
+                // Habilidade Rebrota
+                if (playerEffects.has("Rebrota") && enemies.length > 0 && now % 1000 < 16) {
+                    player.health = Math.min(player.maxHealth, player.health + enemies.length * 0.5);
+                    updateHealthBar();
+                }
+                
+                // Verifica o fim da onda
+                if (enemies.length === 0 && gamePhase === 'playing') {
+                    endWave();
+                }
+
+                drawPlayer();
+                
+            } // Fim de if (gamePhase === 'playing')
+
+            updateExpBar();
+            updateHealthBar();
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Entrada do teclado
+        const keys = {};
+
+        // Inicia o jogo
+        init();
+    </script>
+</body>
+</html>
